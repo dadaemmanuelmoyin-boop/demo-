@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Receipt Lab</title>
+<style>
+:root{--bg:#000;--fg:#fff;--mute:#8E8E93;--mute2:#A1A1AA;--green:#00D632;--panel:#0b0b0c;--line:rgba(255,255,255,.12);color-scheme:dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+.app{display:flex;height:100%}
+aside{display:none;width:100%;max-width:560px;margin:0 auto;overflow-y:auto;background:var(--panel);padding:20px}
+main{flex:1;overflow-y:auto;overscroll-behavior:none}
+.view-edit aside{display:block}
+.view-edit main{display:none}
+#actWrap{display:none}
+.view-activity #actWrap{display:block}
+.view-activity #rcWrap{display:none}
+button.badge{border:0;padding:0;cursor:pointer;font-family:inherit}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.top h1.brand{margin:0}
+h1.brand{font-size:18px;margin:0 0 14px}
+label{display:block;font-size:12px;color:#a1a1aa;margin-bottom:10px}
+input,select{display:block;width:100%;margin-top:4px;background:#18181b;color:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:inherit;font-size:14px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px}
+.sec h2{font-size:14px;margin:0}
+.link{background:none;border:0;color:var(--green);font-size:12px;cursor:pointer;padding:4px}
+.danger{color:#f87171}
+.step{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.step input{margin:0 0 6px}
+.step .row{display:flex;gap:8px;align-items:center}
+.step select{margin:0}
+.btns{display:flex;gap:8px;margin-top:14px}
+.btn{flex:1;background:var(--green);color:#000;border:0;border-radius:9px;padding:10px;font-weight:600;font-size:14px;cursor:pointer}
+.btn.ghost{flex:none;background:none;color:#fff;border:1px solid var(--line);padding:10px 14px;font-weight:500}
+.msg{font-size:12px;color:#a1a1aa;min-height:16px;margin:8px 0}
+.preset{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:6px;font-size:14px}
+.preset button.open{background:none;border:0;color:#fff;font:inherit;text-align:left;cursor:pointer;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{font-size:12px;color:#71717a}
+
+/* receipt */
+.rc{position:relative;max-width:430px;margin:0 auto;min-height:100dvh;padding:44px 24px 64px;background:#000}
+.flag{position:absolute;top:8px;left:0;right:0;text-align:center}
+.flag span{display:inline-block;border:1px solid rgba(251,191,36,.6);background:rgba(251,191,36,.1);color:#fcd34d;border-radius:999px;padding:2px 12px;font-size:11px;font-weight:600}
+.badge{margin-top:32px;width:88px;height:88px;border-radius:50%;background:var(--green);color:#000;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:500}
+.rc h1{font-size:30px;line-height:1.15;font-weight:700;margin:32px 0 0}
+.when{font-size:17px;color:var(--mute);margin:6px 0 0}
+.amt{font-size:46px;font-weight:700;line-height:1;color:var(--mute);margin:32px 0 0;font-variant-numeric:tabular-nums}
+.sub{font-size:21px;font-weight:500;color:var(--mute);margin:8px 0 0;font-variant-numeric:tabular-nums}
+hr{border:0;border-top:1px solid rgba(255,255,255,.1);margin:28px 0}
+.rc h2{font-size:22px;font-weight:700;margin:0}
+ol{list-style:none;margin:24px 0 0;padding:0}
+li{position:relative;display:flex;gap:16px;padding-bottom:28px}
+li:last-child{padding-bottom:0}
+li:not(:last-child)::after{content:"";position:absolute;left:7px;top:20px;bottom:0;width:2px;background:rgba(255,255,255,.25)}
+.dot{position:relative;z-index:1;flex:none;width:16px;height:16px;border-radius:50%;margin-top:4px}
+.dot.completed{background:#fff}
+.dot.active{background:#000;border:2px solid #fff}
+.dot.upcoming{background:#2c2c2e}
+.t1{font-size:18px;font-weight:600;line-height:1.3}
+.t2{font-size:17px;color:var(--mute2)}
+.kv{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;font-size:18px;font-variant-numeric:tabular-nums}
+.kv span:first-child{color:var(--mute)}
+.kv span:last-child{font-weight:600}
+.kv.strong span:first-child{color:#fff;font-weight:600}
+.kv.strong span:last-child{font-weight:700}
+.proceed{position:sticky;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:block;width:100%;margin-top:36px;background:var(--green);color:#000;border:0;border-radius:999px;padding:16px;font-weight:700;font-size:20px;cursor:pointer}
+
+/* generic activity screen: deliberately distinct from the receipt */
+.act{max-width:430px;margin:0 auto;min-height:100dvh;padding:20px 20px 48px;background:#0f1222;color:#e8eaff}
+.act .bar{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.back{background:none;border:0;color:#9aa0ff;font:inherit;font-size:16px;cursor:pointer;padding:4px 0}
+.act .flag2{border:1px solid rgba(251,191,36,.6);background:rgba(251,191,36,.1);color:#fcd34d;border-radius:999px;padding:2px 12px;font-size:11px;font-weight:600}
+.act h1{font-size:26px;margin:18px 0 4px;font-weight:700}
+.act .lbl{font-size:13px;color:#8c92c9;margin:22px 0 8px}
+.arow{display:flex;align-items:center;gap:14px;background:#1a1f36;border-radius:16px;padding:14px;margin-bottom:10px}
+.aico{flex:none;width:44px;height:44px;border-radius:12px;background:#2b3160;color:#9aa0ff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600}
+.amid{flex:1;min-width:0}
+.at{font-size:16px;font-weight:600}
+.as{font-size:13px;color:#8c92c9;margin-top:2px}
+.aamt{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.arow.sample{opacity:.55}
+/* fit-to-screen layout: everything sits in one viewport, with a little extra scroll */
+.rc{min-height:calc(100dvh + 32px);display:flex;flex-direction:column;padding:34px 22px calc(48px + env(safe-area-inset-bottom,0px))}
+.badge{margin-top:min(28px,3.4dvh);width:min(72px,9dvh);height:min(72px,9dvh);font-size:min(36px,4.4dvh)}
+.rc h1{font-size:min(28px,3.5dvh);margin:min(18px,2.4dvh) 0 0}
+.when{font-size:15px;margin-top:4px}
+.amt{font-size:min(42px,5.2dvh);margin-top:min(20px,2.6dvh)}
+.sub{font-size:min(19px,2.4dvh);margin-top:6px}
+hr{margin:min(18px,2.4dvh) 0}
+.rc h2{font-size:20px}
+ol{margin-top:min(16px,2dvh)}
+li{padding-bottom:min(20px,2.6dvh)}
+li:last-child{padding-bottom:0}
+.t1{font-size:16px}.t2{font-size:15px}
+.kv{padding:min(8px,1dvh) 0;font-size:16px}
+.proceed{margin-top:auto;padding:14px;font-size:18px}
+input[readonly]{color:#a1a1aa}
+</style>
+</head>
+<body>
+<div class="app view-receipt" id="app">
+ <aside>
+  <div class="top"><h1 class="brand">Receipt Lab</h1><button class="btn ghost" id="done">Done</button></div>
+  <label>Title<input id="title"></label>
+  <label>Timestamp<input id="when"></label>
+  <div class="grid2">
+   <label>Amount (USD)<input id="fiat" inputmode="decimal"></label>
+   <label>BTC rate (USD)<input id="rate" inputmode="decimal"></label>
+   <label>Fees (USD)<input id="fee" inputmode="decimal"></label>
+   <label>Crypto (auto)<input id="crypto" readonly></label>
+   <label style="grid-column:1/-1">Total (auto)<input id="total" readonly></label>
+  </div>
+  <p class="empty">Rate snapshot: 1 BTC = $61,855.17 (Nov 19, 2026, 20:34 UTC). Hosted pages cannot fetch live prices, so edit the rate field to update it. Crypto and total recalculate from the amount, rate and fees, shown in sats.</p>
+  <div class="sec"><h2>Tracking steps</h2><button class="link" id="addStep">Add step</button></div>
+  <div id="steps"></div>
+  <div class="btns"><button class="btn" id="save">Save preset</button><button class="btn ghost" id="new">New</button></div>
+  <div class="msg" id="msg" role="status"></div>
+  <div class="sec"><h2>Saved presets</h2></div>
+  <div id="presets"></div>
+  <p class="empty">Presets are stored in this browser only.</p>
+ </aside>
+ <main>
+  <div id="rcWrap"><div class="rc">
+   <div class="flag"><span>[PROTOTYPE PREVIEW] not a real transaction</span></div>
+   <button class="badge" id="logo" aria-label="Edit receipt">₿</button>
+   <h1 id="vTitle"></h1>
+   <p class="when" id="vWhen"></p>
+   <p class="amt" id="vAmt"></p>
+   <p class="sub" id="vSub"></p>
+   <hr>
+   <h2>Tracking</h2>
+   <ol id="vSteps"></ol>
+   <hr>
+   <h2>Exchange rate and fees</h2>
+   <div style="margin-top:12px">
+    <div class="kv"><span>Transfer amount</span><span id="vTx"></span></div>
+    <div class="kv"><span>Fees</span><span id="vFee"></span></div>
+    <div class="kv strong"><span>Total</span><span id="vTotal"></span></div>
+   </div>
+   <button class="proceed" id="proceed">Proceed</button>
+  </div></div>
+  <div id="actWrap" class="act">
+   <div class="bar"><button class="back" id="back">‹ Back</button><span class="flag2">[PROTOTYPE PREVIEW] not a real transaction</span></div>
+   <h1>Activity</h1>
+   <div class="lbl">Latest</div>
+   <div id="actList"></div>
+   <div class="lbl">Sample entries</div>
+   <div class="arow sample"><div class="aico">₿</div><div class="amid"><div class="at">Sample deposit</div><div class="as">Placeholder data</div></div><div class="aamt">+ $120.00</div></div>
+   <div class="arow sample"><div class="aico">₿</div><div class="amid"><div class="at">Sample withdrawal</div><div class="as">Placeholder data</div></div><div class="aamt">$60.00</div></div>
+  </div>
+ </main>
+</div>
+
+<script>
+(function(){
+ var KEY="receiptlab:presets";
+ var $=function(id){return document.getElementById(id)};
+ var uid=function(){return Math.random().toString(36).slice(2,9)};
+ var blank=function(){return {title:"Bitcoin withdrawal",when:"Today at 2:27 PM",fiat:"45.22",rate:"61855.17",crypto:"",fee:"3.42",total:"",
+  steps:[{id:uid(),a:"Today at 2:28 PM",b:"Withdrawal created",s:"completed"},{id:uid(),a:"Upcoming",b:"Awaiting confirmation",s:"active"},{id:uid(),a:"Upcoming",b:"Withdrawal confirmed on-chain",s:"upcoming"}]}};
+ var d=blank(), curId=null, presets=[];
+
+ function readStore(){try{var r=localStorage.getItem(KEY);var v=r?JSON.parse(r):[];return Array.isArray(v)?v:[]}catch(e){return []}}
+ function writeStore(){try{localStorage.setItem(KEY,JSON.stringify(presets));return true}catch(e){return false}}
+ function usd(v){return v.charAt(0)==="$"?v:"$"+v}
+ function num(v){var n=parseFloat(String(v).replace(/[^0-9.]/g,""));return isFinite(n)?n:0}
+ function sats(u){var r=num(d.rate);return r>0?Math.round(u/r*1e8):0}
+ function calc(){
+  if(!d.rate)d.rate="61855.17";
+  var f=num(d.fiat),t=f+num(d.fee);
+  d.crypto="₿"+sats(f).toLocaleString("en-US");
+  d.total="$"+t.toFixed(2)+" (₿"+sats(t).toLocaleString("en-US")+")";
+  $("crypto").value=d.crypto;$("total").value=d.total;
+ }
+ function el(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n}
+
+ function renderPreview(){
+  calc();
+  $("vTitle").textContent=d.title; $("vWhen").textContent=d.when;
+  $("vAmt").textContent=usd(d.fiat); $("vSub").textContent=d.crypto;
+  $("vTx").textContent=usd(d.fiat); $("vFee").textContent=usd(d.fee); $("vTotal").textContent=d.total;
+  var ol=$("vSteps"); ol.innerHTML="";
+  d.steps.forEach(function(s){
+   var li=el("li"); li.appendChild(el("span","dot "+s.s));
+   var box=el("div"); box.appendChild(el("div","t1",s.a)); box.appendChild(el("div","t2",s.b)); li.appendChild(box); ol.appendChild(li);
+  });
+ }
+
+ function renderSteps(){
+  var wrap=$("steps"); wrap.innerHTML="";
+  d.steps.forEach(function(s,i){
+   var c=el("div","step");
+   var a=el("input"); a.value=s.a; a.setAttribute("aria-label","Step status or time");
+   a.oninput=function(){s.a=a.value;renderPreview()};
+   var b=el("input"); b.value=s.b; b.setAttribute("aria-label","Step label");
+   b.oninput=function(){s.b=b.value;renderPreview()};
+   var row=el("div","row"); var sel=el("select");
+   ["completed","active","upcoming"].forEach(function(o){var op=el("option",null,o.charAt(0).toUpperCase()+o.slice(1));op.value=o;if(o===s.s)op.selected=true;sel.appendChild(op)});
+   sel.onchange=function(){s.s=sel.value;renderPreview()};
+   var rm=el("button","link danger","Remove"); rm.onclick=function(){d.steps.splice(i,1);renderSteps();renderPreview()};
+   row.appendChild(sel); row.appendChild(rm);
+   c.appendChild(a); c.appendChild(b); c.appendChild(row); wrap.appendChild(c);
+  });
+ }
+
+ function renderPresets(){
+  var w=$("presets"); w.innerHTML="";
+  if(!presets.length){w.appendChild(el("p","empty","Nothing saved yet."));return}
+  presets.forEach(function(p){
+   var r=el("div","preset"); var o=el("button","open",p.title+" · "+usd(p.fiat));
+   o.onclick=function(){d=JSON.parse(JSON.stringify(p));curId=p.pid;delete d.pid;fillForm();$("msg").textContent=""};
+   var x=el("button","link danger","Delete");
+   x.onclick=function(){presets=presets.filter(function(q){return q.pid!==p.pid});writeStore();if(curId===p.pid){curId=null}renderPresets()};
+   r.appendChild(o); r.appendChild(x); w.appendChild(r);
+  });
+ }
+
+ function fillForm(){
+  $("title").value=d.title;$("when").value=d.when;$("fiat").value=d.fiat;$("rate").value=d.rate||"61855.17";$("fee").value=d.fee;
+  $("save").textContent=curId?"Update preset":"Save preset";
+  renderSteps();renderPreview();
+ }
+
+ [["title","title"],["when","when"],["fiat","fiat"],["rate","rate"],["fee","fee"]].forEach(function(p){
+  $(p[0]).oninput=function(){d[p[1]]=$(p[0]).value;renderPreview()};
+ });
+ $("addStep").onclick=function(){d.steps.push({id:uid(),a:"Upcoming",b:"New step",s:"upcoming"});renderSteps();renderPreview()};
+ $("new").onclick=function(){d=blank();curId=null;fillForm();$("msg").textContent=""};
+ $("save").onclick=function(){
+  var rec=JSON.parse(JSON.stringify(d));
+  if(curId){rec.pid=curId;presets=presets.map(function(p){return p.pid===curId?rec:p})}
+  else{rec.pid=uid();curId=rec.pid;presets.unshift(rec)}
+  $("msg").textContent=writeStore()?"Preset saved":"Could not save. Browser storage is unavailable.";
+  $("save").textContent="Update preset"; renderPresets();
+ };
+ function renderAct(){
+  var l=$("actList");l.innerHTML="";
+  var m=/(\d{1,2}:\d{2}\s?[AP]M)/i.exec(d.when);
+  var pending=d.steps.some(function(s){return s.s==="active"});
+  var r=el("div","arow");r.appendChild(el("div","aico","₿"));
+  var mid=el("div","amid");mid.appendChild(el("div","at",d.title));mid.appendChild(el("div","as",d.crypto));
+  mid.appendChild(el("div","as",(m?m[1]:d.when)+" · "+(pending?"Processing":"Completed")));
+  r.appendChild(mid);r.appendChild(el("div","aamt",usd(d.fiat)));l.appendChild(r);
+ }
+ function show(v){$("app").className="app view-"+v;if(v==="activity")renderAct();window.scrollTo(0,0);document.querySelector("main").scrollTop=0}
+ $("logo").onclick=function(){show("edit")};
+ $("done").onclick=function(){show("receipt")};
+ $("proceed").onclick=function(){show("activity")};
+ $("back").onclick=function(){show("receipt")};
+
+ presets=readStore(); renderPresets(); fillForm();
+})();
+</script>
+</body>
+</html>
